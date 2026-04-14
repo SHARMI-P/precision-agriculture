@@ -1,9 +1,10 @@
 # 🌾 Multi-Source Precision Agriculture
-### Crop Yield Prediction & Fertilizer Optimization using Soil-Climate-Yield Fusion with Explainable AI
+### Crop Yield Prediction, Disease Detection & Fertilizer Optimization using Soil-Climate-Yield Fusion with Explainable AI
 
 <div align="center">
 
 ![Python](https://img.shields.io/badge/Python-3.13-3776AB?style=for-the-badge&logo=python&logoColor=white)
+![TensorFlow](https://img.shields.io/badge/TensorFlow-2.x-FF6F00?style=for-the-badge&logo=tensorflow&logoColor=white)
 ![scikit-learn](https://img.shields.io/badge/scikit--learn-1.8.0-F7931E?style=for-the-badge&logo=scikit-learn&logoColor=white)
 ![XGBoost](https://img.shields.io/badge/XGBoost-3.2.0-189AB4?style=for-the-badge)
 ![Streamlit](https://img.shields.io/badge/Streamlit-1.56.0-FF4B4B?style=for-the-badge&logo=streamlit&logoColor=white)
@@ -15,6 +16,8 @@
 [![R²](https://img.shields.io/badge/R²%20Score-0.9774-brightgreen?style=for-the-badge)]()
 [![MAE](https://img.shields.io/badge/MAE-3576.36%20hg%2Fha-blue?style=for-the-badge)]()
 [![RMSE](https://img.shields.io/badge/RMSE-8286.78%20hg%2Fha-orange?style=for-the-badge)]()
+[![CNN](https://img.shields.io/badge/CNN%20Accuracy-93.55%25-brightgreen?style=for-the-badge)]()
+[![Disease Classes](https://img.shields.io/badge/Disease%20Classes-72-purple?style=for-the-badge)]()
 [![Records](https://img.shields.io/badge/Dataset-26183%20Records-yellow?style=for-the-badge)]()
 [![Features](https://img.shields.io/badge/Features-16%20Engineered-purple?style=for-the-badge)]()
 
@@ -24,73 +27,77 @@
 
 ## 📌 Abstract
 
-A production-grade machine learning pipeline that fuses heterogeneous agricultural datasets — crop yield records and soil nutrient profiles — to predict crop yield with **97.74% R² accuracy** and recommend optimal fertilizer doses. The system integrates domain-knowledge feature engineering, ensemble learning, SHAP-based explainability, and gradient-free numerical optimization, served through an interactive Streamlit dashboard.
+A production-grade machine learning pipeline that fuses heterogeneous agricultural datasets — crop yield records and soil nutrient profiles — to predict crop yield with **97.74% R² accuracy** and recommend optimal fertilizer doses. Now extended with a **CNN-based plant disease detection system** achieving **93.55% accuracy across 72 disease classes** using the PlantVillage dataset. The system integrates domain-knowledge feature engineering, ensemble learning, SHAP-based explainability, gradient-free numerical optimization, and deep learning for visual disease diagnosis — all served through an interactive Streamlit dashboard.
 
 ---
 
 ## 🏗️ System Architecture
 
 ```
-┌─────────────────────────────────────────────────────────────┐
-│                   DATA INGESTION LAYER                      │
-│   yield_df.csv (28,242 rows) + soil_crop.csv (2,200 rows)  │
-└──────────────────────────┬──────────────────────────────────┘
-                           │
-                           ▼
-┌─────────────────────────────────────────────────────────────┐
-│                  PREPROCESSING LAYER                        │
-│  • Duplicate removal      • IQR outlier filtering           │
-│  • Median imputation      • String normalization            │
-│  • Crop-level soil aggregation (groupby mean)               │
-│  • Left merge on crop name → fused_dataset (26,183 rows)   │
-└──────────────────────────┬──────────────────────────────────┘
-                           │
-                           ▼
-┌─────────────────────────────────────────────────────────────┐
-│                FEATURE ENGINEERING LAYER                    │
-│  NPK Ratio • Soil Fertility Score • Climate Index           │
-│  pH Deviation • Pesticide Efficiency • Decade Encoding      │
-│  LabelEncoding (Area, Item) • StandardScaler                │
-│  → 16 features | 80/20 train-test split                    │
-└──────────────────────────┬──────────────────────────────────┘
-                           │
-                           ▼
-┌─────────────────────────────────────────────────────────────┐
-│                  MODEL TRAINING LAYER                       │
-│                                                             │
-│  ┌───────────────┐  ┌─────────────┐  ┌──────────────────┐  │
-│  │ Random Forest │  │   XGBoost   │  │Gradient Boosting │  │
-│  │  R²=0.9774 ✅ │  │  R²=0.9732  │  │   R²=0.9479      │  │
-│  └───────────────┘  └─────────────┘  └──────────────────┘  │
-│           → Best model saved: Random Forest                 │
-└──────────────────────────┬──────────────────────────────────┘
-                           │
-              ┌────────────┴────────────┐
-              ▼                         ▼
-┌─────────────────────┐   ┌─────────────────────────────┐
-│  EXPLAINABILITY     │   │      OPTIMIZATION           │
-│  SHAP TreeExplainer │   │  scipy.optimize (L-BFGS-B)  │
-│  Global + Local     │   │  Optimal N, P, K → MaxYield │
-└─────────────────────┘   └─────────────────────────────┘
-                           │
-                           ▼
-┌─────────────────────────────────────────────────────────────┐
-│                    STREAMLIT DASHBOARD                      │
-│      Yield Prediction | Fertilizer Optimizer | SHAP        │
-└─────────────────────────────────────────────────────────────┘
+┌─────────────────────────────────────────────────────────────────────┐
+│                      DATA INGESTION LAYER                           │
+│  yield_df.csv (28,242 rows) + soil_crop.csv (2,200 rows)           │
+│  PlantVillage Dataset (50,000+ leaf images, 72 disease classes)    │
+└──────────────────────┬──────────────────────────┬───────────────────┘
+                       │                          │
+                       ▼                          ▼
+┌──────────────────────────────┐   ┌──────────────────────────────────┐
+│     PREPROCESSING LAYER      │   │       CNN TRAINING PIPELINE      │
+│  • Duplicate removal         │   │  • Image resize to 224×224       │
+│  • IQR outlier filtering     │   │  • Data augmentation             │
+│  • Median imputation         │   │  • MobileNetV2 / Custom CNN      │
+│  • Crop-level soil fusion    │   │  • 72-class softmax output       │
+│  → fused_dataset (26,183)    │   │  → cnn_disease_model.h5 saved   │
+└──────────────────────┬───────┘   └──────────────────────────────────┘
+                       │
+                       ▼
+┌─────────────────────────────────────────────────────────────────────┐
+│                   FEATURE ENGINEERING LAYER                         │
+│  NPK Ratio • Soil Fertility Score • Climate Index                   │
+│  pH Deviation • Pesticide Efficiency • Decade Encoding              │
+│  LabelEncoding (Area, Item) • StandardScaler                        │
+│  → 16 features | 80/20 train-test split                            │
+└──────────────────────┬──────────────────────────────────────────────┘
+                       │
+                       ▼
+┌─────────────────────────────────────────────────────────────────────┐
+│                     MODEL TRAINING LAYER                            │
+│                                                                     │
+│  ┌───────────────┐  ┌─────────────┐  ┌──────────────────┐          │
+│  │ Random Forest │  │   XGBoost   │  │Gradient Boosting │          │
+│  │  R²=0.9774 ✅ │  │  R²=0.9732  │  │   R²=0.9479      │          │
+│  └───────────────┘  └─────────────┘  └──────────────────┘          │
+│           → Best model saved: Random Forest                         │
+└──────────────┬──────────────────────────┬───────────────────────────┘
+               │                          │
+               ▼                          ▼
+┌──────────────────────┐   ┌──────────────────────────────┐
+│   EXPLAINABILITY     │   │        OPTIMIZATION          │
+│  SHAP TreeExplainer  │   │  scipy.optimize (L-BFGS-B)   │
+│  Global + Local      │   │  Optimal N,P,K → Max Yield   │
+└──────────────────────┘   └──────────────────────────────┘
+                       │
+                       ▼
+┌─────────────────────────────────────────────────────────────────────┐
+│                      STREAMLIT DASHBOARD                            │
+│  🔬 Disease Detection | 🌾 Yield Prediction                        │
+│  🧪 Fertilizer Optimizer | 📊 SHAP Insights                        │
+└─────────────────────────────────────────────────────────────────────┘
 ```
 
 ---
 
 ## 📦 Datasets
 
-| Dataset | File | Rows | Key Columns |
+| Dataset | File | Rows / Size | Key Columns |
 |---|---|---|---|
-| Crop Yield | `yield_df.csv` | 28,242 | Area, Item, Year, rainfall, avg_temp, pesticides, hg/ha_yield |
-| Soil Nutrients | `soil_crop.csv` | 2,200 | N, P, K, ph, humidity, temperature, label |
-| **Fused** | `fused_dataset.csv` | **26,183** | All 15 columns merged on crop name |
+| Crop Yield | `yield_df.csv` | 28,242 rows | Area, Item, Year, rainfall, avg_temp, pesticides, hg/ha_yield |
+| Soil Nutrients | `soil_crop.csv` | 2,200 rows | N, P, K, ph, humidity, temperature, label |
+| **Fused** | `fused_dataset.csv` | **26,183 rows** | All 15 columns merged on crop name |
+| Plant Disease | PlantVillage | 50,000+ images | 72 disease classes across 14 crops |
 
-> ⚠️ Download datasets from Kaggle. Place in `data/raw/` and rename `Crop_recommendation.csv` → `soil_crop.csv`
+> ⚠️ Download `yield_df.csv` and `soil_crop.csv` from Kaggle. Place in `data/raw/` and rename `Crop_recommendation.csv` → `soil_crop.csv`.
+> Download the PlantVillage dataset and place extracted images in `data/plantvillage/`.
 
 ---
 
@@ -100,22 +107,43 @@ A production-grade machine learning pipeline that fuses heterogeneous agricultur
 precision_agriculture/
 │
 ├── data/
-│   ├── raw/                        ← Place datasets here
-│   └── processed/                  ← Auto-generated CSVs
+│   ├── raw/
+│   │   ├── yield_df.csv                ← Crop yield dataset
+│   │   └── soil_crop.csv               ← Soil nutrients dataset
+│   ├── processed/
+│   │   ├── cleaned_yield.csv           ← Auto-generated
+│   │   ├── cleaned_soil.csv            ← Auto-generated
+│   │   └── fused_dataset.csv           ← Auto-generated
+│   ├── plantvillage/                   ← Leaf images by class folder
+│   └── plantvillage_split.zip          ← Zipped image archive
+│
+├── notebooks/
+│   ├── 01_eda_yield.ipynb              ← Yield data exploration
+│   ├── 02_eda_soil.ipynb               ← Soil data exploration
+│   └── 03_fusion_check.ipynb           ← Fusion validation
 │
 ├── src/
-│   ├── preprocess.py               ← Cleaning, fusion
-│   ├── feature_eng.py              ← Feature creation, scaling
-│   ├── train.py                    ← RF, XGBoost, GBM
-│   ├── evaluate.py                 ← Metrics, plots
-│   ├── explainability.py           ← SHAP analysis
-│   └── optimizer.py                ← Fertilizer optimizer
+│   ├── __init__.py
+│   ├── preprocess.py                   ← Cleaning & fusion
+│   ├── feature_eng.py                  ← Feature creation & scaling
+│   ├── train.py                        ← RF, XGBoost, GBM training
+│   ├── evaluate.py                     ← Metrics & evaluation plots
+│   ├── explainability.py               ← SHAP analysis
+│   ├── cnn_model.py                    ← CNN disease model training
+│   └── optimizer.py                    ← Fertilizer optimizer
 │
-├── models/                         ← Saved model, scaler, encoders
-├── plots/                          ← All generated charts
-├── notebooks/                      ← EDA notebooks
-├── app.py                          ← Streamlit dashboard
-├── main.py                         ← Pipeline runner
+├── models/
+│   ├── best_model.pkl                  ← Trained Random Forest
+│   ├── scaler.pkl                      ← Feature scaler
+│   ├── feature_cols.pkl                ← Feature column names
+│   ├── le_area.pkl                     ← Area label encoder
+│   ├── le_item.pkl                     ← Crop label encoder
+│   ├── cnn_disease_model.h5            ← Trained CNN model
+│   └── class_names.pkl                 ← 72 disease class names
+│
+├── plots/                              ← All generated charts
+├── app.py                              ← Streamlit dashboard
+├── main.py                             ← Full pipeline runner
 └── requirements.txt
 ```
 
@@ -128,12 +156,12 @@ precision_agriculture/
 git clone https://github.com/SHARMI-P/precision-agriculture.git
 cd precision-agriculture
 
-# Virtual environment
+# Virtual environment (optional but recommended)
 python -m venv venv
 venv\Scripts\activate        # Windows
 source venv/bin/activate     # Mac/Linux
 
-# Install
+# Install dependencies
 pip install -r requirements.txt
 ```
 
@@ -142,12 +170,39 @@ pip install -r requirements.txt
 ## 🚀 Usage
 
 ```bash
-# Run full pipeline
+# Step 1 — Run full ML pipeline (only needed once or when retraining)
 python main.py
 
-# Launch dashboard
+# Step 2 — Launch dashboard
 streamlit run app.py
 ```
+
+> ✅ Once `main.py` has been run, all models are saved in `models/`. On subsequent runs just use `streamlit run app.py` directly.
+
+---
+
+## 🖥️ Dashboard Features
+
+### 🔬 Tab 1 — Plant Disease Detection (CNN)
+- Upload any leaf image (JPG/PNG)
+- CNN model classifies it into one of **72 disease classes** across 14 crops
+- Displays **Top 3 predictions** with confidence scores
+- Identifies plant name and disease name separately
+- Model accuracy: **93.55%**
+
+### 🌾 Tab 2 — Yield Prediction
+- Input crop, region, year, rainfall, temperature, N, P, K, pH, humidity, pesticides
+- Predicts crop yield in **hg/ha** using the best trained model (Random Forest)
+
+### 🧪 Tab 3 — Fertilizer Optimizer
+- Input current N, P, K values
+- Uses **L-BFGS-B optimization** to find the NPK combination that maximizes predicted yield
+- Shows optimal N, P, K values and the delta change from current values
+
+### 📊 Tab 4 — SHAP Insights
+- Displays global feature importance (SHAP bar chart)
+- Beeswarm plot showing feature impact direction
+- Dependence plots for top features
 
 ---
 
@@ -175,6 +230,11 @@ XGBRegressor(n_estimators=200, learning_rate=0.05, max_depth=8, subsample=0.8, c
 
 # Gradient Boosting
 GradientBoostingRegressor(n_estimators=200, learning_rate=0.05, max_depth=6, random_state=42)
+
+# CNN Disease Model
+Input: 224×224 RGB leaf image
+Output: 72-class softmax
+Accuracy: 93.55%
 ```
 
 ---
@@ -186,6 +246,10 @@ GradientBoostingRegressor(n_estimators=200, learning_rate=0.05, max_depth=6, ran
 | ✅ **Random Forest** | **0.9774** | **3576.36** | **8286.78** | 14.82% |
 | XGBoost | 0.9732 | 5112.61 | 9018.77 | — |
 | Gradient Boosting | 0.9479 | 7584.87 | 12574.38 | — |
+
+| CNN Model | Accuracy | Classes |
+|---|---|---|
+| Plant Disease CNN | **93.55%** | 72 disease classes |
 
 ---
 
@@ -243,6 +307,7 @@ Change   : N +42.3, P +11.7, K -1.8
 
 | Category | Library | Version |
 |---|---|---|
+| Deep Learning | TensorFlow / Keras | 2.x |
 | Machine Learning | scikit-learn | 1.8.0 |
 | Boosting | XGBoost | 3.2.0 |
 | Explainability | SHAP | 0.51.0 |
@@ -250,8 +315,11 @@ Change   : N +42.3, P +11.7, K -1.8
 | Data | Pandas + NumPy | 3.0.2 / 2.4.4 |
 | Visualization | Matplotlib + Seaborn | 3.10.8 / 0.13.2 |
 | Dashboard | Streamlit | 1.56.0 |
+| Image Processing | Pillow (PIL) | — |
 | Language | Python | 3.13 |
 
 ---
 
+## 👤 Author
 
+**SHARMI-P** — [GitHub](https://github.com/SHARMI-P/precision-agriculture)

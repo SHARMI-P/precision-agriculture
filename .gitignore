@@ -1,5 +1,13 @@
-venv/
+data/
+plots/
+models/*.h5
+models/*.keras
 __pycache__/
-*.pkl
-data/raw/
 *.pyc
+.ipynb_checkpoints/
+.vscode/
+data.zip
+*.zip
+venv/
+precision-agriculture.zip
+models/best_model.pkl
